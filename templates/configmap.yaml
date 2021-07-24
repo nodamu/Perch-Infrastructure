@@ -1,0 +1,7 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "perch-backend.fullname" . }}
+data:
+  application.properties: |-
+    {{- toYaml .Values.config.env | nindent 4}}
