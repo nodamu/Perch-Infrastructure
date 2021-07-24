@@ -1,0 +1,118 @@
+# Default values for perch-backend.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: nickadamu/perch-api
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+  # - name : regcred
+
+# Set image pull secrets (in case you're using a private container registry).
+# imageCredentials:
+#   registry:  gcr.io
+#   username: oauth2accesstoken
+#   password: $(gcloud auth print-access-token)
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: "perch-backend-service-account"
+
+podAnnotations: {}
+
+labels:
+  app: perch-api
+  version: 0.1.1
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8092
+
+# clusterRole:
+#   resources:
+#     - "configmaps"
+#     - "pods"
+#     - "services"
+#     - "endpoints"
+#     - "secrets"
+clusterrole:
+  rules:
+    - apiGroups: [""] # "" indicates the core API group
+      resources: '["configmaps", "pods", "services", "endpoints", "secrets"]'
+      verbs: ["get", "list", "watch"]
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: api.perch.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+# Set to false to disable Spring Cloud Kubernetes support.
+sck: true
+
+config:
+  env: |-
+    logging.pattern.console=%clr(%d{yy-MM-dd E HH:mm:ss.SSS}){blue} %clr(%-5p) %clr(${PID}){faint} %clr(---){faint} %clr([%8.15t]){cyan} %clr(%-40.40logger{0}){blue} %clr(:){red} %clr(%m){faint}%n
+    spring.data.mongodb.uri=mongodb://admin:perch@mongodb-0.mongodb-headless.default.svc.cluster.local:27017/perch?replicaSet=rs0
+    server.port=8092
+    petch.trace=true
+    springdoc.api-docs.path=/api-docs
+    springdoc.swagger-ui.path=/swagger-ui.html
+    claim.aud=perchapp
+    spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://host.docker.internal:8060/auth/realms/Perch/protocol/openid-connect/certs
+    management.endpoints.web.exposure.include=prometheus,health,info,metrics
+    logging.level.root=info
+
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 85
+  # targetMemoryUtilizationPercentage: 80
